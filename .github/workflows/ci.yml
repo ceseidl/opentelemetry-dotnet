@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build --nologo -warnaserror
+
+      - name: Start the observability stack
+        run: docker compose up -d && sleep 15
+
+      - name: Run the demo
+        run: timeout 600 dotnet run --no-build --project src/Shop
+
+      - name: Read the signals back
+        run: |
+          sleep 10
+          out=$(python3 check.py)
+          echo "$out"
+          echo "$out" | grep -Eq '^gateway +2\.1\.0 +2400 +60 '
+          echo "$out" | grep -Eq '^payments +1\.4\.0 +1200 +0 '
+          echo "$out" | grep -Eq '^payments +1\.5\.0 +1200 +60 '
+          echo "$out" | grep -q "logs (Loki): 60 'timed out' lines"
+          echo "$out" | grep -q 'trace (Jaeger): 6 spans'
+          echo "$out" | grep -Eq 'payments +fraud-check'
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
