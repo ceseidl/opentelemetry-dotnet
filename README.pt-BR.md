@@ -2,6 +2,8 @@
 
 # OpenTelemetry em .NET: do código ao Grafana
 
+Artigo completo: <https://ceseidl.com.br/artigos/opentelemetry-dotnet/>
+
 Código do artigo "OpenTelemetry em .NET: do código ao Grafana com Jaeger, Prometheus e Loki".
 
 Três serviços ASP.NET Core (`gateway` → `orders` → `payments`) rodam em processos separados e mandam traces, métricas e logs por OTLP para o OpenTelemetry Collector. O Collector manda os traces ao Jaeger, as métricas ao Prometheus e os logs ao Loki, e o Grafana mostra tudo junto. No meio da execução, o `payments` passa da versão 1.4.0 para a 1.5.0, que tem uma verificação antifraude lenta.
